@@ -2,9 +2,9 @@ import scapy.all as s
 import select
 from interface import Interface
 
-class Proxy:
+class Nat:
     def __init__(self, in_iface, out_iface):
-        self.proxy_address = None
+        self.sessions = { }
         self.in_iface = in_iface
         self.out_iface = out_iface
         self.in_sock = s.conf.L2socket(self.in_iface.name)
@@ -16,21 +16,31 @@ class Proxy:
 
             for sock in readable:
                 if sock is self.in_sock:
-                    self._to_out_proxy()
+                    self._to_out_nat()
                 elif sock is self.out_sock:
-                    self._to_in_proxy()
+                    self._to_in_nat()
 
-    def _to_out_proxy(self):
+    def _verify_session(self, packet):
+        fourtuple = (packet.src, packet.sport, packet.dst, packet.dport)
+        if fourtuple in self.sessions.values():
+            return
+        pass
+
+    def _to_out_nat(self):
         packet = self.in_sock.recv()
         if s.IP not in packet:
             print("Not an IP packet...")
             return
-        self.proxy_address = (packet[s.Ether].src, packet[s.IP].src)
+        if s.UDP not in packet and s.TCP not in packet:
+            print("Not a layer 4 packet...")
+            return
+        self._verify_session(packet)
+        self.sessions[()]
         packet[s.Ether].src = self.out_iface.mac
         packet[s.IP].src = self.out_iface.ip
         self.out_sock.send(packet)
 
-    def _to_in_proxy(self):
+    def _to_in_nat(self):
         packet = self.in_sock.recv()
         if self.proxy_address is None:
             print("No proxy exists...")
@@ -46,7 +56,7 @@ def main():
     ifaces = []
     ifaces.append(Interface("enp0s8", "192.168.56.101", "08:00:27:1b:96:26"))
     ifaces.append(Interface("enp0s9", "192.168.56.102", "08:00:27:b0:5a:7a"))
-    proxy = Proxy(ifaces[0], ifaces[1])
+    proxy = Nat(ifaces[0], ifaces[1])
     proxy.run()
 
     
