@@ -23,7 +23,7 @@ class Proxy:
     def _to_out_proxy(self):
         packet = self.in_sock.recv()
         if s.IP not in packet:
-            print("Not a layer 3 packet...")
+            print("Not an IP packet...")
             return
         self.proxy_address = (packet[s.Ether].src, packet[s.IP].src)
         packet[s.Ether].src = self.out_iface.mac
