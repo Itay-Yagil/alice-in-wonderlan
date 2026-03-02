@@ -1,11 +1,12 @@
 import scapy.all as s
-from interface import Interface
 from nat_sessions import NatSessions
 from fourtuple import Fourtuple
+from firewall import Firewall
 
 class Nat:
     def __init__(self, in_iface, out_iface):
         self.sessions = NatSessions()
+        self.firewall = Firewall()
         self.in_iface = in_iface
         self.out_iface = out_iface
         self.in_sock = s.conf.L2socket(self.in_iface.name)
@@ -15,7 +16,10 @@ class Nat:
         while True:
             packet = s.sniff(iface=[self.in_iface.name, self.out_iface.name], count=1)[0]
             sniffed_iface_name = packet.sniffed_on
-            if sniffed_iface_name == self.in_iface.name:
+            if not self.firewall.check(packet):
+                print("Packed dropped")
+                packet.show()
+            elif sniffed_iface_name == self.in_iface.name:
                 print(f"Sniffed on {self.in_iface.name}")
                 packet.show()
                 self._to_out_nat(packet)
@@ -66,6 +70,9 @@ class Nat:
             return
         self.sessions._create_session(src_fourtuple, self.out_iface.ip)
 
+    def add_firewall_rule(self, rule):
+        self.firewall.add_rule(rule)
+
 
 def is_layer_four_packet(packet):
     if packet is None:
@@ -73,15 +80,3 @@ def is_layer_four_packet(packet):
     elif s.IP not in packet or (s.UDP not in packet and s.TCP not in packet):
         return False
     return True
-
-
-def main():
-    ifaces = []
-    ifaces.append(Interface("enp0s8", "192.168.56.101", "08:00:27:ad:b5:99"))
-    ifaces.append(Interface("enp0s9", "192.168.56.102", "08:00:27:86:a9:6f"))
-    nat = Nat(ifaces[0], ifaces[1])
-    nat.run()
-
-
-if __name__ == "__main__":
-    main()
