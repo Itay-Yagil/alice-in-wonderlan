@@ -24,3 +24,6 @@ class Session:
         if nat_fourtuple == self.get_nat():
             return True
         return False
+    
+    def __str__(self):
+        return f"{self.src_ip}:{self.src_port} - {self.nat_ip}:{self.nat_port} - {self.dst_ip}:{self.dst_port}"

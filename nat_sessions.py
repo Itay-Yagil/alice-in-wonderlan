@@ -40,7 +40,12 @@ class NatSessions:
         while nat_port in self._used_ports:
             nat_port = random.randrange(SMALLEST_PORT, HIGHEST_PORT + 1)
         self._used_ports.add(nat_port)
-
         self._sessions.append(Session(src_fourtuple.client_ip, src_fourtuple.client_port, nat_ip, nat_port, \
                                       src_fourtuple.server_ip, src_fourtuple.server_port))
-        
+
+    def __str__(self):
+        session_strings = []
+        for session in self._sessions:
+            session_strings.append(session.__str__())
+        sessions_print = "\n".join(session_strings)
+        return f"Sessions:\n{sessions_print}"

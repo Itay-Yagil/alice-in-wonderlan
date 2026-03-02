@@ -1,5 +1,4 @@
 import scapy.all as s
-import select
 from interface import Interface
 from nat_sessions import NatSessions
 from fourtuple import Fourtuple
@@ -14,20 +13,22 @@ class Nat:
 
     def run(self):
         while True:
-            readable, _, _ = select.select([self.in_sock, self.out_sock], [], [])
-            for sock in readable:
-                if sock is self.in_sock:
-                    print("IN!")
-                    self._to_out_nat()
-                elif sock is self.out_sock:
-                    print("OUT!")
-                    self._to_in_nat()
+            packet = s.sniff(iface=[self.in_iface.name, self.out_iface.name], count=1)[0]
+            sniffed_iface_name = packet.sniffed_on
+            if sniffed_iface_name == self.in_iface.name:
+                print(f"Sniffed on {self.in_iface.name}")
+                packet.show()
+                self._to_out_nat(packet)
+                print(self.sessions)
+            elif sniffed_iface_name == self.out_iface.name:
+                print(f"Sniffed on {self.out_iface.name}")
+                packet.show()
+                self._to_in_nat(packet)
+                print(self.sessions)
 
-
-    def _to_out_nat(self):
-        packet = self.in_sock.recv()
+    def _to_out_nat(self, packet):
         if not is_layer_four_packet(packet):
-            return False
+             return False
         src_fourtuple = Fourtuple(packet[s.IP].src, packet.sport, packet[s.IP].dst, packet.dport)
         self._verify_session(src_fourtuple)
         packet.src = self.out_iface.mac
@@ -35,11 +36,11 @@ class Nat:
         self._change_packet_fourtuple(packet, nat_fourtuple.client_ip, nat_fourtuple.client_port, \
                                       nat_fourtuple.server_ip, nat_fourtuple.server_port)
         self.out_sock.send(packet)
-        print("SENT OUT!")
+        print(f"SENT OUT")
+        packet.show()
         return True
 
-    def _to_in_nat(self):
-        packet = self.out_sock.recv()
+    def _to_in_nat(self, packet):
         if not is_layer_four_packet(packet):
             return False
         nat_fourtuple = Fourtuple(packet[s.IP].dst, packet.dport, packet[s.IP].src, packet.sport)
@@ -50,20 +51,21 @@ class Nat:
         self._change_packet_fourtuple(packet, src_fourtuple.server_ip, src_fourtuple.server_port, \
                                       src_fourtuple.client_ip, src_fourtuple.client_port)
         self.in_sock.send(packet)
-        print("SENT IN!")
+        print(f"SENT IN")
+        packet.show()
         return True
-    
+
     def _change_packet_fourtuple(self, packet, src_ip, src_port, dst_ip, dst_port):
         packet[s.IP].src = src_ip
         packet.sport = src_port
         packet[s.IP].dst = dst_ip
         packet.dport = dst_port
-    
+
     def _verify_session(self, src_fourtuple):
         if self.sessions.is_src_session_exists(src_fourtuple):
             return
         self.sessions._create_session(src_fourtuple, self.out_iface.ip)
-        
+
 
 def is_layer_four_packet(packet):
     if packet is None:
@@ -75,8 +77,8 @@ def is_layer_four_packet(packet):
 
 def main():
     ifaces = []
-    ifaces.append(Interface("enp0s8", "192.168.56.101", "08:00:27:1b:96:26"))
-    ifaces.append(Interface("enp0s9", "192.168.56.102", "08:00:27:b0:5a:7a"))
+    ifaces.append(Interface("enp0s8", "192.168.56.101", "08:00:27:ad:b5:99"))
+    ifaces.append(Interface("enp0s9", "192.168.56.102", "08:00:27:86:a9:6f"))
     nat = Nat(ifaces[0], ifaces[1])
     nat.run()
 
