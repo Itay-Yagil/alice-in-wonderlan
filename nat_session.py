@@ -1,10 +1,26 @@
-class Session:
-    def __init__(self, original_fourtuple, nat_fourtuple):
-        self._original = original_fourtuple
-        self._nat = nat_fourtuple
+from fourtuple import Fourtuple
 
-    def get_original(self):
-        return self._original
+class Session:
+    def __init__(self, src_ip, src_port, nat_ip, nat_port, dst_ip, dst_port):
+        self.src_ip = src_ip
+        self.src_port = src_port
+        self.nat_ip = nat_ip
+        self.nat_port = nat_port
+        self.dst_ip = dst_ip
+        self.dst_port = dst_port
+
+    def get_src(self):
+        return Fourtuple(self.src_ip, self.src_port, self.dst_ip, self.dst_port)
 
     def get_nat(self):
-        return self._nat
+        return Fourtuple(self.nat_ip, self.nat_port, self.dst_ip, self.dst_port)
+    
+    def equals_src(self, src_fourtuple):
+        if src_fourtuple == self.get_src():
+            return True
+        return False
+    
+    def equals_nat(self, nat_fourtuple):
+        if nat_fourtuple == self.get_nat():
+            return True
+        return False
