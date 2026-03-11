@@ -1,0 +1,2 @@
+class StaticClassCreated(Exception):
+    pass
