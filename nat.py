@@ -70,8 +70,8 @@ class Nat:
             return
         self.sessions._create_session(src_fourtuple, self.out_iface.ip)
 
-    def add_firewall_rule(self, rule):
-        self.firewall.add_rule(rule)
+    def add_firewall_rule_chain(self, rule_chain):
+        self.firewall.add_rule_chain(rule_chain)
 
 
 def is_layer_four_packet(packet):

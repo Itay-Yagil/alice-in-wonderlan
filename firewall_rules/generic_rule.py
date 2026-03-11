@@ -2,8 +2,7 @@ from exceptions import StaticClassCreated
 
 class GenericRule:
     def __init__(self):
-         raise StaticClassCreated
+        pass
 
-    @classmethod
-    def passes(cls, packet):
-        raise NotImplementedError
+    def is_relevant(self):
+        pass
