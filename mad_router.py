@@ -4,17 +4,22 @@ from routing_table import RoutingTable, Entry
 
 class Router:
     def __init__(self, ifaces, routing_table):
-        self.sockets = []
         self._ifaces = ifaces
         self._routing_table = routing_table
     
     def run(self):
         while True:
             packet = s.sniff(iface=[iface.name for iface in self._ifaces], count=1)[0]
+            packet.show()
+            if s.IP not in packet:
+                continue
             out_iface = self._routing_table.find_match(packet[s.IP].dst)
+            print(f"Recieved from {packet.sniffed_on}")
             if out_iface != None:
+                print(f"Sending to {out_iface.name}")
                 packet.src = out_iface.mac
                 packet[s.IP].ttl -= 1
+                packet.show()
                 s.sendp(packet, iface=out_iface.name)
             
 

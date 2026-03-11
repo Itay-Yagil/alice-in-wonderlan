@@ -8,8 +8,8 @@ class Entry:
     def is_match(self, ip):
         return ipaddress.ip_address(ip) in self._subnet
     
-    def get_interface_name(self):
-        return self._inteface.name
+    def get_interface(self):
+        return self._inteface
 
 
 class RoutingTable:
@@ -25,5 +25,5 @@ class RoutingTable:
     def find_match(self, ip):
         for entry in self.table:
             if entry.is_match(ip):
-                return entry
+                return entry.get_interface()
         return None
