@@ -8,22 +8,23 @@ class Router:
     
     def run(self):
         while True:
-            packet = s.sniff(iface=[self._in_iface.name, self._out_iface.name], count=1)[0]
+            packet = s.sniff(iface=[self._in_iface.get_name(), self._out_iface.get_name()], count=1)[0]
             packet.show()
             if s.IP not in packet:
                 continue
             print(f"Recieved from {packet.sniffed_on}")
 
             send_to_iface = None
-            if packet.sniffed_on == self._in_iface.name:
+            if packet.sniffed_on == self._in_iface.get_name():
                 send_to_iface = self._out_iface
             else:
                 send_to_iface = self._in_iface
-            print(f"Sending to {send_to_iface.name}")
-            packet.src = send_to_iface.mac
+            print(f"Sending to {send_to_iface.get_name()}")
+            packet.src = send_to_iface.get_mac()
+            packet.dst = None
             packet[s.IP].ttl -= 1
             packet.show()
-            s.sendp(packet, iface=send_to_iface.name)
+            s.sendp(packet, iface=send_to_iface.get_name())
             
 
 def main():
