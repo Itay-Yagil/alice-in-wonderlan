@@ -1,6 +1,5 @@
 import scapy.all as s
 from interface import Interface
-from routing_table import RoutingTable, Entry
 
 class Router:
     def __init__(self, ifaces, routing_table):
