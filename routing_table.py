@@ -1,15 +1,19 @@
-import ipaddress
+import scapy.all as s
 
 class Entry:
-    def __init__(self, inteface, subnet):
+    def __init__(self, inteface, subnet, gateway):
         self._inteface = inteface
-        self._subnet = ipaddress.ip_network(subnet)
+        self._subnet = subnet
+        self._gateway = gateway
     
     def is_match(self, ip):
-        return ipaddress.ip_address(ip) in self._subnet
+        return ip in s.Net(self._subnet)
     
     def get_interface(self):
         return self._inteface
+    
+    def get_gateway(self):
+        return self._gateway
 
 
 class RoutingTable:
@@ -25,5 +29,5 @@ class RoutingTable:
     def find_match(self, ip):
         for entry in self.table:
             if entry.is_match(ip):
-                return entry.get_interface()
+                return entry
         return None
